@@ -38,7 +38,10 @@ new class extends Component
         // Derive the encryption key from the master password and store it in the
         // session. It will be used to encrypt/decrypt vault entries until logout.
         $encryptionKey = $encryption->deriveKey($this->password, $salt);
-        session(['vault_key' => base64_encode($encryptionKey)]);
+        session([
+            'vault_key'    => base64_encode($encryptionKey),
+            'mfa_verified' => true, // new accounts have no MFA configured yet
+        ]);
 
         Auth::login($user);
 

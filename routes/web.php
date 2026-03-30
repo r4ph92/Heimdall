@@ -11,13 +11,22 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', fn () => view('auth.register'))->name('register');
 });
 
-// Authenticated routes — also requires the vault key to be present in session
-Route::middleware(['auth', \App\Http\Middleware\EnsureVaultKeyInSession::class])->group(function () {
+// MFA challenge — auth + vault key required, but NOT mfa_verified (that's what this page does)
+Route::middleware(['auth', \App\Http\Middleware\EnsureVaultKeyInSession::class])
+    ->get('/mfa/challenge', fn () => view('mfa.challenge'))
+    ->name('mfa.challenge');
+
+// Fully authenticated routes — auth + vault key + MFA verified
+Route::middleware([
+    'auth',
+    \App\Http\Middleware\EnsureVaultKeyInSession::class,
+    \App\Http\Middleware\EnsureMfaVerified::class,
+])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
     Route::get('/settings', fn () => view('settings'))->name('settings');
 
     Route::post('/logout', function () {
-        session()->forget('vault_key');
+        session()->forget(['vault_key', 'mfa_verified']);
         Auth::logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();

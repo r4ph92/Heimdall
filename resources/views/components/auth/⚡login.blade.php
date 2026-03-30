@@ -33,6 +33,15 @@ new class extends Component
 
         session()->regenerate();
 
+        // If MFA is enabled, redirect to the challenge page instead of the dashboard.
+        // The vault key is already in session so the challenge page can load,
+        // but EnsureMfaVerified will block the dashboard until the code is confirmed.
+        if ($user->hasMfaEnabled()) {
+            $this->redirect(route('mfa.challenge'), navigate: true);
+            return;
+        }
+
+        session(['mfa_verified' => true]);
         $this->redirect(route('dashboard'), navigate: true);
     }
 };
