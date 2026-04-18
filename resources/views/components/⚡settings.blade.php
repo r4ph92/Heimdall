@@ -299,17 +299,17 @@ new class extends Component
 };
 ?>
 
-<div class="flex h-screen bg-gray-950 text-white overflow-hidden animate-fadein">
+<div class="flex h-screen bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-white overflow-hidden animate-fadein">
 
     {{-- Sidebar (reuse same structure as dashboard) --}}
-    <aside class="w-64 shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col">
-        <div class="px-6 py-5 border-b border-gray-800">
-            <h1 class="text-xl font-bold tracking-tight text-white">⚡ Heimdall</h1>
+    <aside class="w-64 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+        <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
+            <h1 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">⚡ Heimdall</h1>
             <p class="text-xs text-gray-500 mt-0.5">{{ auth()->user()->name }}</p>
         </div>
         <nav class="flex-1 px-3 py-4 space-y-1">
             <a wire:navigate href="{{ route('dashboard') }}"
-                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors duration-150">
+                class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors duration-150">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                 My Vault
             </a>
@@ -319,10 +319,24 @@ new class extends Component
                 Settings
             </a>
         </nav>
-        <div class="px-3 py-4 border-t border-gray-800">
+        <div class="px-3 py-4 border-t border-gray-200 dark:border-gray-800 space-y-1">
+            <button
+                x-data
+                @click="$store.theme.toggle()"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors duration-150"
+            >
+                <template x-if="$store.theme.dark">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 100 10A5 5 0 0012 7z"/></svg>
+                </template>
+                <template x-if="!$store.theme.dark">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </template>
+                <span x-text="$store.theme.dark ? 'Light mode' : 'Dark mode'"></span>
+            </button>
+
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-400 hover:bg-red-900/40 hover:text-red-400 transition-colors duration-150">
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/40 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-150">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     Lock & Logout
                 </button>
@@ -334,14 +348,14 @@ new class extends Component
     <main class="flex-1 overflow-y-auto p-8" x-data="{ tab: 'sessions' }">
         <div class="max-w-2xl mx-auto space-y-6">
 
-            <h2 class="text-2xl font-bold text-white">Settings</h2>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
 
             {{-- Tab nav --}}
-            <div class="flex gap-1 bg-gray-900 rounded-xl p-1 border border-gray-800">
+            <div class="flex gap-1 bg-white dark:bg-gray-900 rounded-xl p-1 border border-gray-200 dark:border-gray-800">
                 @foreach(['sessions' => 'Sessions', 'security' => 'Password', 'mfa' => 'Two-Factor', 'passkeys' => 'Passkeys'] as $key => $label)
                     <button
                         @click="tab = '{{ $key }}'"
-                        :class="tab === '{{ $key }}' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                        :class="tab === '{{ $key }}' ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'"
                         class="flex-1 text-sm font-medium py-2 rounded-lg transition-colors duration-150"
                     >{{ $label }}</button>
                 @endforeach
@@ -351,38 +365,45 @@ new class extends Component
             <div x-show="tab === 'sessions'" x-transition:enter="transition ease-out duration-150"
                 x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-                    <div class="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
-                        <h3 class="font-semibold text-white">Active Sessions</h3>
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+                    <div class="px-5 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Active Sessions</h3>
                         <button
-                            wire:click="revokeOtherSessions"
-                            wire:confirm="Revoke all other sessions? They will be logged out."
-                            class="text-xs text-red-400 hover:text-red-300 transition"
+                            x-data
+                            @click="$store.modal.confirm(
+                                'Revoke all other sessions? Those devices will be logged out.',
+                                () => $wire.revokeOtherSessions()
+                            )"
+                            class="text-xs text-red-500 dark:text-red-400 hover:text-red-400 dark:hover:text-red-300 transition"
                         >Revoke all others</button>
                     </div>
-                    <ul class="divide-y divide-gray-800">
+                    <ul class="divide-y divide-gray-200 dark:divide-gray-800">
                         @foreach($this->getSessions() as $session)
                             <li class="px-5 py-4 flex items-center gap-4">
-                                <div class="w-9 h-9 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
+                                <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
                                     @if(str_contains($session['os'], 'iPhone') || str_contains($session['os'], 'Android'))
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                     @else
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                     @endif
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-white flex items-center gap-2">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
                                         {{ $session['browser'] }} on {{ $session['os'] }}
                                         @if($session['is_current'])
-                                            <span class="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">Current</span>
+                                            <span class="text-xs bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">Current</span>
                                         @endif
                                     </p>
                                     <p class="text-xs text-gray-500">{{ $session['ip'] }} · {{ $session['last_active'] }}</p>
                                 </div>
                                 @if(! $session['is_current'])
                                     <button
-                                        wire:click="revokeSession('{{ $session['id'] }}')"
-                                        class="text-xs text-gray-600 hover:text-red-400 transition shrink-0"
+                                        x-data
+                                        @click="$store.modal.confirm(
+                                            'Revoke this session? That device will be logged out.',
+                                            () => $wire.revokeSession('{{ $session['id'] }}')
+                                        )"
+                                        class="text-xs text-gray-400 dark:text-gray-600 hover:text-red-400 transition shrink-0"
                                     >Revoke</button>
                                 @endif
                             </li>
@@ -395,12 +416,12 @@ new class extends Component
             <div x-show="tab === 'security'" x-transition:enter="transition ease-out duration-150"
                 x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-                    <h3 class="font-semibold text-white mb-1">Change Master Password</h3>
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-1">Change Master Password</h3>
                     <p class="text-xs text-gray-500 mb-5">All vault entries will be silently re-encrypted with the new key.</p>
 
                     @if($passwordSaved)
-                        <div class="bg-green-900/30 border border-green-700/50 text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
+                        <div class="bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700/50 text-green-700 dark:text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
                             Password updated successfully.
                         </div>
                     @endif
@@ -410,26 +431,21 @@ new class extends Component
                             <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Current Password</label>
                             <div class="relative">
                                 <input wire:model="current_password" :type="show ? 'text' : 'password'"
-                                    class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                                    class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                                 <button type="button" @click="show=!show" x-text="show?'Hide':'Show'"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-white transition"></button>
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition"></button>
                             </div>
-                            @error('current_password') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
+                            @error('current_password') <p class="text-red-500 dark:text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
-                        <div x-data="{ show: false }">
+                        <div>
                             <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">New Password</label>
-                            <div class="relative">
-                                <input wire:model="new_password" :type="show ? 'text' : 'password'" placeholder="Minimum 12 characters"
-                                    class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                                <button type="button" @click="show=!show" x-text="show?'Hide':'Show'"
-                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-white transition"></button>
-                            </div>
-                            @error('new_password') <p class="text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
+                            <x-password-input wire:model.live="new_password" placeholder="Minimum 12 characters" />
+                            @error('new_password') <p class="text-red-500 dark:text-red-400 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Confirm New Password</label>
                             <input wire:model="new_password_confirmation" type="password"
-                                class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                                class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                         <button type="submit"
                             class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl transition-colors duration-150"
@@ -446,39 +462,45 @@ new class extends Component
                 x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
                 @if($mfaSuccessMessage)
-                    <div class="bg-green-900/30 border border-green-700/50 text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700/50 text-green-700 dark:text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
                         {{ $mfaSuccessMessage }}
                     </div>
                 @endif
 
                 {{-- Recovery codes shown once after enabling --}}
                 @if(session('mfa_recovery_codes_plain'))
-                    <div class="bg-yellow-900/20 border border-yellow-700/40 rounded-2xl p-5 mb-4">
-                        <p class="text-yellow-400 text-sm font-semibold mb-2">Save your recovery codes</p>
-                        <p class="text-yellow-600 text-xs mb-3">Each code can only be used once. Store them somewhere safe — they won't be shown again.</p>
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700/40 rounded-2xl p-5 mb-4">
+                        <p class="text-yellow-700 dark:text-yellow-400 text-sm font-semibold mb-2">Save your recovery codes</p>
+                        <p class="text-yellow-600 dark:text-yellow-600 text-xs mb-3">Each code can only be used once. Store them somewhere safe — they won't be shown again.</p>
                         <div class="grid grid-cols-2 gap-2">
                             @foreach(session('mfa_recovery_codes_plain') as $code)
-                                <code class="bg-gray-900 text-gray-300 text-xs rounded-lg px-3 py-2 font-mono">{{ $code }}</code>
+                                <code class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-xs rounded-lg px-3 py-2 font-mono">{{ $code }}</code>
                             @endforeach
                         </div>
                     </div>
                 @endif
 
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-5">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="font-semibold text-white">Two-Factor Authentication</h3>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h3>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 @if(auth()->user()->hasMfaEnabled())
-                                    Active via <strong class="text-gray-300">{{ auth()->user()->two_factor_type === 'totp' ? 'Authenticator app' : 'Email' }}</strong>
+                                    Active via <strong class="text-gray-700 dark:text-gray-300">{{ auth()->user()->two_factor_type === 'totp' ? 'Authenticator app' : 'Email' }}</strong>
                                 @else
                                     Not enabled
                                 @endif
                             </p>
                         </div>
                         @if(auth()->user()->hasMfaEnabled())
-                            <button wire:click="disableMfa" wire:confirm="Disable two-factor authentication?"
-                                class="text-xs text-red-400 hover:text-red-300 transition">Disable</button>
+                            <button
+                                x-data
+                                @click="$store.modal.confirm(
+                                    'Disable two-factor authentication? Your account will be less secure.',
+                                    () => $wire.disableMfa()
+                                )"
+                                class="text-xs text-red-500 dark:text-red-400 hover:text-red-400 dark:hover:text-red-300 transition"
+                            >Disable</button>
                         @endif
                     </div>
 
@@ -486,39 +508,39 @@ new class extends Component
                         <div class="grid grid-cols-2 gap-3">
                             {{-- Email MFA --}}
                             <button wire:click="enableEmailMfa"
-                                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-4 text-left transition-colors duration-150">
+                                class="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left transition-colors duration-150">
                                 <div class="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center mb-2">
                                     <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                 </div>
-                                <p class="text-sm font-medium text-white">Email OTP</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Email OTP</p>
                                 <p class="text-xs text-gray-500 mt-0.5">Get a code by email on each login</p>
                             </button>
                             {{-- TOTP --}}
                             <button wire:click="beginTotpSetup"
-                                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-4 text-left transition-colors duration-150">
+                                class="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-left transition-colors duration-150">
                                 <div class="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center mb-2">
                                     <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 </div>
-                                <p class="text-sm font-medium text-white">Authenticator App</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Authenticator App</p>
                                 <p class="text-xs text-gray-500 mt-0.5">Use Google Authenticator or similar</p>
                             </button>
                         </div>
 
                         {{-- TOTP QR code setup --}}
                         @if($totpQrCode)
-                            <div class="bg-gray-800 rounded-xl p-5 space-y-4">
-                                <p class="text-sm text-gray-300">Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.</p>
+                            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-5 space-y-4">
+                                <p class="text-sm text-gray-700 dark:text-gray-300">Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.</p>
                                 <div class="flex justify-center bg-white rounded-xl p-3 w-fit mx-auto">
                                     <img src="data:image/svg+xml;base64,{{ $totpQrCode }}" class="w-40 h-40">
                                 </div>
-                                <p class="text-xs text-gray-500 text-center">Manual key: <code class="text-gray-300">{{ $totpSecret }}</code></p>
+                                <p class="text-xs text-gray-500 text-center">Manual key: <code class="text-gray-700 dark:text-gray-300">{{ $totpSecret }}</code></p>
                                 <form wire:submit="confirmTotp" class="flex gap-3">
                                     <input wire:model="totpConfirmCode" type="text" inputmode="numeric" maxlength="6"
                                         placeholder="000000"
-                                        class="flex-1 bg-gray-900 border border-gray-700 text-white text-center tracking-widest rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                                        class="flex-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-center tracking-widest rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors duration-150">Confirm</button>
                                 </form>
-                                @error('totpConfirmCode') <p class="text-red-400 text-xs">{{ $message }}</p> @enderror
+                                @error('totpConfirmCode') <p class="text-red-500 dark:text-red-400 text-xs">{{ $message }}</p> @enderror
                             </div>
                         @endif
                     @endif
@@ -530,37 +552,42 @@ new class extends Component
                 x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
 
                 @if($passkeySuccessMessage)
-                    <div class="bg-green-900/30 border border-green-700/50 text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700/50 text-green-700 dark:text-green-400 text-sm rounded-xl px-4 py-3 mb-4">
                         {{ $passkeySuccessMessage }}
                     </div>
                 @endif
 
-                <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-5">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-5">
                     <div>
-                        <h3 class="font-semibold text-white">Passkeys</h3>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Passkeys</h3>
                         <p class="text-xs text-gray-500 mt-0.5">Use Touch ID, Face ID, or a hardware key as a second factor after your master password.</p>
                     </div>
 
                     {{-- Existing passkeys --}}
                     @if($this->passkeys->count())
-                        <ul class="divide-y divide-gray-800 -mx-6 px-6">
+                        <ul class="divide-y divide-gray-200 dark:divide-gray-800 -mx-6 px-6">
                             @foreach($this->passkeys as $passkey)
                                 <li class="py-3 flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                    <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
                                     </div>
                                     <div class="flex-1">
-                                        <p class="text-sm text-white">{{ $passkey->name }}</p>
+                                        <p class="text-sm text-gray-900 dark:text-white">{{ $passkey->name }}</p>
                                         <p class="text-xs text-gray-500">Added {{ $passkey->created_at->diffForHumans() }}{{ $passkey->last_used_at ? ' · Last used '.$passkey->last_used_at->diffForHumans() : '' }}</p>
                                     </div>
-                                    <button wire:click="deletePasskey({{ $passkey->id }})"
-                                        wire:confirm="Remove this passkey?"
-                                        class="text-xs text-gray-600 hover:text-red-400 transition">Remove</button>
+                                    <button
+                                        x-data
+                                        @click="$store.modal.confirm(
+                                            'Remove this passkey? You won\'t be able to use it to log in.',
+                                            () => $wire.deletePasskey({{ $passkey->id }})
+                                        )"
+                                        class="text-xs text-gray-400 dark:text-gray-600 hover:text-red-400 transition"
+                                    >Remove</button>
                                 </li>
                             @endforeach
                         </ul>
                     @else
-                        <p class="text-sm text-gray-600">No passkeys registered yet.</p>
+                        <p class="text-sm text-gray-400 dark:text-gray-600">No passkeys registered yet.</p>
                     @endif
 
                     {{-- Register new passkey --}}
@@ -595,7 +622,7 @@ new class extends Component
                         <div class="flex-1">
                             <label class="block text-xs text-gray-500 uppercase tracking-wider mb-1">Passkey name</label>
                             <input wire:model="passkeyName" type="text" placeholder="e.g. MacBook Touch ID"
-                                class="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                                class="w-full bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                         <button @click="register()"
                             class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors duration-150 shrink-0">
