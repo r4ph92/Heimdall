@@ -276,6 +276,138 @@ new class extends Component
                     </div>
                 </div>
             </div>
+
+            {{-- Password Generator --}}
+            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
+                x-data="{
+                    password: '',
+                    show: false,
+                    copied: false,
+                    length: 20,
+                    useUpper: true,
+                    useNumbers: true,
+                    useSymbols: true,
+
+                    calcEntropy(pwd) {
+                        if (!pwd) return 0;
+                        let cs = 26;
+                        if (/[A-Z]/.test(pwd)) cs += 26;
+                        if (/[0-9]/.test(pwd)) cs += 10;
+                        if (/[^a-zA-Z0-9]/.test(pwd)) cs += 32;
+                        return Math.floor(pwd.length * Math.log2(cs));
+                    },
+                    get entropy() { return this.calcEntropy(this.password); },
+                    get strength() {
+                        const e = this.entropy;
+                        if (e === 0)  return null;
+                        if (e < 36)   return { label: 'Weak',        color: 'bg-red-500',     text: 'text-red-500',     pct: '15%' };
+                        if (e < 60)   return { label: 'Fair',        color: 'bg-orange-500',  text: 'text-orange-500',  pct: '35%' };
+                        if (e < 80)   return { label: 'Good',        color: 'bg-yellow-400',  text: 'text-yellow-500',  pct: '55%' };
+                        if (e < 100)  return { label: 'Strong',      color: 'bg-green-500',   text: 'text-green-600 dark:text-green-400',   pct: '78%' };
+                        if (e < 128)  return { label: 'Very strong', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', pct: '90%' };
+                        return              { label: 'Excellent',   color: 'bg-blue-500',    text: 'text-blue-600',    pct: '100%' };
+                    },
+                    generate() {
+                        let chars = 'abcdefghijklmnopqrstuvwxyz';
+                        if (this.useUpper)   chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                        if (this.useNumbers) chars += '0123456789';
+                        if (this.useSymbols) chars += '!@#$%^&*()-_=+[]{}|;,.<>?';
+                        const arr = new Uint32Array(this.length);
+                        crypto.getRandomValues(arr);
+                        this.password = Array.from(arr).map(n => chars[n % chars.length]).join('');
+                        this.copied = false;
+                    },
+                    copy() {
+                        if (!this.password) return;
+                        navigator.clipboard.writeText(this.password).then(() => {
+                            this.copied = true;
+                            setTimeout(() => this.copied = false, 1500);
+                        });
+                    }
+                }"
+                x-init="generate()"
+            >
+                <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Password Generator</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Generate a cryptographically secure password</p>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5 space-y-4">
+
+                    {{-- Password display --}}
+                    <div class="relative bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3">
+                        <p class="text-sm font-mono text-gray-900 dark:text-white break-all pr-20 min-h-[1.25rem]"
+                            x-text="show ? password : password.replace(/./g, '•')"></p>
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            <button type="button" @click="show = !show"
+                                class="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+                                x-text="show ? 'Hide' : 'Show'"></button>
+                            <div class="w-px h-3 bg-gray-300 dark:bg-gray-600"></div>
+                            <button type="button" @click="copy()"
+                                class="text-xs font-medium transition"
+                                :class="copied ? 'text-green-600 dark:text-green-400' : 'text-blue-600 hover:text-blue-500'"
+                                x-text="copied ? 'Copied!' : 'Copy'"></button>
+                        </div>
+                    </div>
+
+                    {{-- Entropy bar --}}
+                    <template x-if="entropy > 0">
+                        <div class="space-y-1">
+                            <div class="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500"
+                                    :class="strength?.color"
+                                    :style="'width: ' + (strength?.pct ?? '0%')"></div>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs font-medium" :class="strength?.text" x-text="strength?.label"></span>
+                                <span class="text-xs text-gray-400 font-mono" x-text="entropy + ' bits'"></span>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- Length slider --}}
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-xs font-medium text-gray-600 dark:text-gray-400">Length</span>
+                            <span class="text-xs font-mono font-semibold text-gray-900 dark:text-white" x-text="length"></span>
+                        </div>
+                        <input type="range" x-model="length" min="8" max="64" @input="generate()"
+                            class="w-full accent-blue-600 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 appearance-none cursor-pointer">
+                    </div>
+
+                    {{-- Character type toggles --}}
+                    <div class="flex gap-2 flex-wrap">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" x-model="useUpper" @change="generate()" class="accent-blue-600 rounded">
+                            <span class="text-xs text-gray-600 dark:text-gray-400">A–Z</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" x-model="useNumbers" @change="generate()" class="accent-blue-600 rounded">
+                            <span class="text-xs text-gray-600 dark:text-gray-400">0–9</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" x-model="useSymbols" @change="generate()" class="accent-blue-600 rounded">
+                            <span class="text-xs text-gray-600 dark:text-gray-400">!@#…</span>
+                        </label>
+                    </div>
+
+                    {{-- Regenerate button --}}
+                    <button type="button" @click="generate()"
+                        class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors duration-150">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Regenerate
+                    </button>
+                </div>
+            </div>
         </div>
 
         {{-- ── Right column (1/3) ─────────────────────────────────── --}}
