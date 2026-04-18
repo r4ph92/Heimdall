@@ -1,5 +1,13 @@
 import './bootstrap';
 
+function applyTheme() {
+    const isDark = localStorage.getItem('theme') !== 'light';
+    document.documentElement.classList.toggle('dark', isDark);
+}
+
+// Re-apply after every wire:navigate page swap (inline head script doesn't re-run)
+document.addEventListener('livewire:navigated', applyTheme);
+
 // Global confirm modal store — used by all custom confirmation dialogs
 document.addEventListener('alpine:init', () => {
     Alpine.store('modal', {
