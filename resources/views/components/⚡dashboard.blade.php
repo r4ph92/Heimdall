@@ -9,6 +9,14 @@ new class extends Component
     public string $activeView = 'list';
     public ?int $selectedEntryId = null;
 
+    public function mount(): void
+    {
+        $view = request()->query('view');
+        if (in_array($view, ['create', 'tools'])) {
+            $this->activeView = $view;
+        }
+    }
+
     #[On('view-entry')]
     public function viewEntry(int $id): void
     {
