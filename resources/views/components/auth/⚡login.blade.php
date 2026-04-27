@@ -2,6 +2,7 @@
 
 use App\Services\EncryptionService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -18,11 +19,24 @@ new class extends Component
             'password' => ['required', 'string'],
         ]);
 
+        // Key per email+IP so both targeted account attacks and IP-based brute force are limited
+        $rateLimitKey = 'login.' . str($this->email)->lower() . '.' . request()->ip();
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            throw ValidationException::withMessages([
+                'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
         if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+            RateLimiter::hit($rateLimitKey, 60);
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match our records.',
             ]);
         }
+
+        RateLimiter::clear($rateLimitKey);
 
         $user = Auth::user();
 

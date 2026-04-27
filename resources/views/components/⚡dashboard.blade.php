@@ -5,7 +5,7 @@ use Livewire\Component;
 
 new class extends Component
 {
-    // Which panel is shown in the main area: 'list' | 'detail' | 'create' | 'tools'
+    // Which panel is shown in the main area: 'list' | 'detail' | 'create' | 'edit' | 'tools'
     public string $activeView = 'list';
     public ?int $selectedEntryId = null;
 
@@ -14,6 +14,13 @@ new class extends Component
     {
         $this->selectedEntryId = $id;
         $this->activeView = 'detail';
+    }
+
+    #[On('edit-entry')]
+    public function editEntry(int $id): void
+    {
+        $this->selectedEntryId = $id;
+        $this->activeView = 'edit';
     }
 
     #[On('create-entry')]
@@ -61,7 +68,7 @@ new class extends Component
             <button
                 wire:click="$dispatch('back-to-list')"
                 class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150
-                    {{ in_array($activeView, ['list', 'detail']) ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white' }}"
+                    {{ in_array($activeView, ['list', 'detail', 'edit']) ? 'bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white' }}"
             >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                 My Vault
@@ -134,6 +141,8 @@ new class extends Component
             <livewire:vault.entry-list :selectedEntryId="$selectedEntryId" :key="'list-'.$selectedEntryId" />
         @elseif ($activeView === 'create')
             <livewire:vault.create-entry :key="'create'" />
+        @elseif ($activeView === 'edit')
+            <livewire:vault.entry-detail :entryId="$selectedEntryId" :key="'edit-'.$selectedEntryId" />
         @elseif ($activeView === 'tools')
             <livewire:vault.tools :key="'tools'" />
         @endif
