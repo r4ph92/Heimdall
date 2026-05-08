@@ -11,10 +11,10 @@ new class extends Component
 {
     public string $code = '';
     public bool $otpSent = false;
+    public ?string $emailError = null;
 
     public function mount(): void
     {
-        // If user uses email MFA, send the OTP automatically on page load
         if (auth()->user()->two_factor_type === 'email') {
             $this->sendEmailOtp();
         }
@@ -25,12 +25,15 @@ new class extends Component
         $user = auth()->user();
         $otp  = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Store hashed OTP in cache for 10 minutes, keyed by user ID
         Cache::put("mfa_otp_{$user->id}", bcrypt($otp), now()->addMinutes(10));
 
-        Mail::to($user->email)->send(new MfaOtpMail($otp));
-
-        $this->otpSent = true;
+        try {
+            Mail::to($user->email)->send(new MfaOtpMail($otp));
+            $this->otpSent = true;
+            $this->emailError = null;
+        } catch (\Exception $e) {
+            $this->emailError = 'Failed to send email. Please try again or use a recovery code.';
+        }
     }
 
     public function verify(): void
@@ -112,6 +115,12 @@ new class extends Component
                 @endif
             </p>
         </div>
+
+        @if($emailError)
+            <div class="mb-4 text-sm text-red-400 bg-red-900/20 border border-red-800/40 rounded-xl px-4 py-3 text-center">
+                {{ $emailError }}
+            </div>
+        @endif
 
         <form wire:submit="verify" class="space-y-4" x-data>
             <div>
