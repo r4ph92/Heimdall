@@ -32,6 +32,7 @@ new class extends Component
             $this->otpSent = true;
             $this->emailError = null;
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('MFA email failed: ' . $e->getMessage());
             $this->emailError = 'Failed to send email. Please try again or use a recovery code.';
         }
     }
