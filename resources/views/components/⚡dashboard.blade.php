@@ -66,7 +66,7 @@ new class extends Component
     <x-app-sidebar :active="$activeView" />
 
     {{-- Main panel --}}
-    <main class="flex-1 overflow-y-auto">
+    <main class="flex-1 overflow-y-auto pt-14 md:pt-0 pb-16 md:pb-0">
         @if ($activeView === 'list' || $activeView === 'detail')
             <livewire:vault.entry-list :selectedEntryId="$selectedEntryId" :key="'list-'.$selectedEntryId" />
         @elseif ($activeView === 'create')

@@ -211,26 +211,26 @@ new class extends Component
     <x-app-sidebar active="audit" />
 
     {{-- Main content --}}
-    <main class="flex-1 flex flex-col overflow-hidden">
+    <main class="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0 pb-16 md:pb-0">
 
         {{-- Top bar --}}
-        <div class="shrink-0 px-8 py-5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-6">
+        <div class="shrink-0 px-4 md:px-8 py-4 md:py-5 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-6">
             <div>
                 <h2 class="text-xl font-bold text-gray-900 dark:text-white">Security Audit</h2>
                 <p class="text-xs text-gray-500 mt-0.5">{{ count($this->auditResults) }} entries analysed</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 w-full md:w-auto">
                 {{-- Search --}}
-                <div class="relative">
+                <div class="relative flex-1 md:flex-none">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
                     </svg>
                     <input wire:model.live.debounce.300ms="search" type="text" placeholder="Search entries…"
-                        class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl pl-9 pr-4 py-2 w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-xl pl-9 pr-4 py-2 w-full md:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
                 {{-- Refresh --}}
                 <button wire:click="runAudit" wire:loading.class="opacity-50 cursor-not-allowed"
-                    class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition shrink-0">
                     <svg class="w-4 h-4" wire:loading.class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
@@ -240,7 +240,7 @@ new class extends Component
         </div>
 
         {{-- Scrollable body --}}
-        <div class="flex-1 overflow-y-auto p-8">
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
         <div class="max-w-6xl mx-auto space-y-6">
 
             @if($editSaved)
@@ -251,7 +251,7 @@ new class extends Component
             @endif
 
             {{-- ── Summary cards ──────────────────────────────────────── --}}
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
 
                 {{-- Security Score --}}
                 @php
@@ -348,9 +348,9 @@ new class extends Component
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
 
                 {{-- Table header + filter tabs --}}
-                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-4">
+                <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <h3 class="font-semibold text-gray-900 dark:text-white">Vulnerability Report</h3>
-                    <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1">
+                    <div class="flex items-center gap-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-1 overflow-x-auto max-w-full shrink-0">
                         @foreach(['all' => 'All', 'issues' => 'Issues', 'weak' => 'Weak', 'reused' => 'Reused'] as $key => $label)
                             <button
                                 wire:click="$set('filter', '{{ $key }}')"
@@ -366,29 +366,42 @@ new class extends Component
                     <div class="border-b border-gray-100 dark:border-gray-800 last:border-0">
 
                         {{-- Row --}}
-                        <div class="px-5 py-4 flex items-center gap-4">
+                        <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
 
-                            {{-- Favicon / Letter --}}
-                            <div class="w-9 h-9 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0 overflow-hidden"
-                                x-data="{ err: false }">
-                                @if($entry['domain'])
-                                    <img x-show="!err" x-on:error="err = true"
-                                        src="https://icon.horse/icon/{{ $entry['domain'] }}"
-                                        class="w-full h-full object-contain p-1">
-                                    <span x-show="err">{{ strtoupper(substr($entry['service_name'], 0, 1)) }}</span>
-                                @else
-                                    {{ strtoupper(substr($entry['service_name'], 0, 1)) }}
-                                @endif
-                            </div>
+                            {{-- Top row on mobile: icon + service name + action --}}
+                            <div class="flex items-center gap-3 min-w-0">
+                                {{-- Favicon / Letter --}}
+                                <div class="w-9 h-9 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0 overflow-hidden"
+                                    x-data="{ err: false }">
+                                    @if($entry['domain'])
+                                        <img x-show="!err" x-on:error="err = true"
+                                            src="https://icon.horse/icon/{{ $entry['domain'] }}"
+                                            class="w-full h-full object-contain p-1">
+                                        <span x-show="err">{{ strtoupper(substr($entry['service_name'], 0, 1)) }}</span>
+                                    @else
+                                        {{ strtoupper(substr($entry['service_name'], 0, 1)) }}
+                                    @endif
+                                </div>
 
-                            {{-- Service + username --}}
-                            <div class="w-40 shrink-0 min-w-0">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $entry['service_name'] }}</p>
-                                <p class="text-xs text-gray-500 truncate">{{ $entry['username'] }}</p>
+                                {{-- Service + username --}}
+                                <div class="min-w-0 flex-1 sm:w-40 sm:flex-none">
+                                    <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $entry['service_name'] }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ $entry['username'] }}</p>
+                                </div>
+
+                                {{-- Action (mobile: inline with name row) --}}
+                                <div class="sm:hidden shrink-0">
+                                    @if($entry['has_issues'])
+                                        <button wire:click="editEntry({{ $entry['id'] }})"
+                                            class="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors duration-150">
+                                            Fix
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
 
                             {{-- Issue badges --}}
-                            <div class="flex-1 flex flex-wrap gap-1.5">
+                            <div class="flex flex-wrap gap-1.5 sm:flex-1">
                                 @if(empty($entry['issues']))
                                     <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/40 px-2.5 py-0.5 rounded-full">
                                         <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
@@ -405,7 +418,7 @@ new class extends Component
                                 @endif
                             </div>
 
-                            {{-- Strength + age --}}
+                            {{-- Strength + age (desktop only) --}}
                             <div class="hidden lg:flex items-center gap-4 shrink-0">
                                 <div class="text-right">
                                     <p class="text-xs font-medium {{ $entry['strength_color'] }}">{{ $entry['strength'] }}</p>
@@ -417,8 +430,8 @@ new class extends Component
                                 </div>
                             </div>
 
-                            {{-- Action --}}
-                            <div class="shrink-0 flex items-center gap-2">
+                            {{-- Action (desktop) --}}
+                            <div class="hidden sm:flex shrink-0 items-center gap-2">
                                 @if($entry['has_issues'])
                                     <button wire:click="editEntry({{ $entry['id'] }})"
                                         class="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors duration-150">
@@ -477,7 +490,7 @@ new class extends Component
             {{-- ── Insight panel ───────────────────────────────────────── --}}
             @php $totalIssues = $weakCount + $reusedCount + $oldCount; @endphp
             @if($totalIssues > 0)
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5 flex items-center justify-between gap-6">
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
                     <div class="flex items-start gap-3">
                         <div class="w-9 h-9 rounded-xl bg-blue-600/10 flex items-center justify-center shrink-0 mt-0.5">
                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

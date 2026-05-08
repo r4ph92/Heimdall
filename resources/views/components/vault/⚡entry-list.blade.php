@@ -44,6 +44,12 @@ new class extends Component
         ];
     }
 
+    public function clearSelection(): void
+    {
+        $this->selectedEntryId = null;
+        $this->decrypted = null;
+    }
+
     public function deleteEntry(int $id): void
     {
         VaultEntry::where('user_id', auth()->id())->findOrFail($id)->delete();
@@ -66,8 +72,8 @@ new class extends Component
 
 <div class="flex h-full animate-fadein">
 
-    {{-- Entry list column --}}
-    <div class="w-80 shrink-0 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+    {{-- Entry list column — full width on mobile when no entry selected, hidden when detail shown --}}
+    <div class="{{ $decrypted ? 'hidden md:flex' : 'flex' }} w-full md:w-80 md:shrink-0 border-r border-gray-200 dark:border-gray-800 flex-col">
         <div class="px-4 py-4 border-b border-gray-200 dark:border-gray-800 space-y-3">
             <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Vault</h2>
             <div class="relative">
@@ -120,8 +126,8 @@ new class extends Component
         </div>
     </div>
 
-    {{-- Detail panel --}}
-    <div class="flex-1 p-8 overflow-y-auto">
+    {{-- Detail panel — hidden on mobile when no entry selected --}}
+    <div class="{{ $decrypted ? 'flex' : 'hidden md:flex' }} flex-1 flex-col p-4 md:p-8 overflow-y-auto">
         @if ($decrypted)
             <div
                 x-data
@@ -131,8 +137,14 @@ new class extends Component
                             $el.style.opacity=1;
                             $el.style.transform='translateY(0)';
                         })"
-                class="max-w-lg"
+                class="max-w-lg w-full"
             >
+                {{-- Mobile back button --}}
+                <button wire:click="clearSelection" class="md:hidden flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 mb-4 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    Back to vault
+                </button>
+
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-4">
                         @php $detailDomain = $decrypted['url'] ? parse_url($decrypted['url'], PHP_URL_HOST) : null; @endphp

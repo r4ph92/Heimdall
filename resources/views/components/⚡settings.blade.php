@@ -304,7 +304,7 @@ new class extends Component
     <x-app-sidebar active="settings" />
 
     {{-- Main content --}}
-    <main class="flex-1 overflow-y-auto p-8" x-data="{ tab: 'sessions' }">
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 pt-18 md:pt-8 pb-20 md:pb-8" x-data="{ tab: 'sessions' }">
         <div class="max-w-2xl mx-auto space-y-6">
 
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h2>
