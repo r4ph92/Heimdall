@@ -12,6 +12,19 @@ Heimdall is a zero-knowledge password manager built as a school project (Cegep s
 - **Frontend:** Livewire 4 (inline anonymous components with `⚡` prefix), Alpine.js, Tailwind CSS 4, Vite
 - **Security libs:** `pragmarx/google2fa` (TOTP), `bacon/bacon-qr-code` (QR), `web-auth/webauthn-lib` (passkeys — installed but not integrated)
 
+## First-Time Setup (fresh clone)
+
+Run these commands in order after cloning into a directory **outside iCloud Drive** (e.g. `~/Developer/Heimdall`). The project must not be inside `~/Documents` or `~/Desktop` — iCloud Drive syncing those folders causes PHP file-read timeouts (`errno=60`) that break the dev server.
+
+```bash
+composer install && npm install   # Install PHP and JS dependencies
+cp .env.example .env              # Only if .env was not copied from the original repo
+php artisan key:generate          # Only if .env was freshly created above
+php artisan migrate               # Creates database/database.sqlite and runs all migrations
+```
+
+If you copied `database/database.sqlite` from the previous repo location, skip `php artisan migrate` — the database is already set up.
+
 ## Commands
 
 ```bash
