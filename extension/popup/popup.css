@@ -1,0 +1,229 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg:       #0f172a;
+    --surface:  #1e293b;
+    --border:   #334155;
+    --text:     #e2e8f0;
+    --muted:    #94a3b8;
+    --accent:   #6366f1;
+    --accent-h: #4f46e5;
+    --danger:   #ef4444;
+    --success:  #22c55e;
+    --radius:   8px;
+}
+
+body {
+    width: 340px;
+    min-height: 200px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+.logo      { font-size: 18px; }
+.app-name  { font-weight: 600; flex: 1; }
+.icon-btn  {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 1;
+}
+.icon-btn:hover { color: var(--text); background: var(--border); }
+
+/* ── Views ───────────────────────────────────────────────────────────────────── */
+.view { padding: 20px 16px; }
+
+h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+}
+
+/* ── Login form ──────────────────────────────────────────────────────────────── */
+.field { margin-bottom: 12px; }
+.field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.field input {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+}
+.field input:focus { border-color: var(--accent); }
+
+/* ── Biometric view ──────────────────────────────────────────────────────────── */
+.biometric-icon { font-size: 40px; text-align: center; margin-bottom: 12px; }
+.subtitle       { color: var(--muted); font-size: 13px; text-align: center; margin-bottom: 16px; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+.btn-primary {
+    width: 100%;
+    padding: 9px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 4px;
+}
+.btn-primary:hover    { background: var(--accent-h); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-ghost {
+    width: 100%;
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+.btn-ghost:hover        { color: var(--text); border-color: var(--muted); }
+.btn-ghost.small        { font-size: 12px; padding: 6px 12px; }
+.btn-ghost.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* ── Error message ───────────────────────────────────────────────────────────── */
+.error-msg {
+    background: #450a0a;
+    color: #fca5a5;
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-size: 12px;
+    margin: 8px 0;
+}
+
+/* ── Search ──────────────────────────────────────────────────────────────────── */
+.search-row { margin-bottom: 10px; }
+#search {
+    width: 100%;
+    padding: 7px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+}
+#search:focus { border-color: var(--accent); }
+
+/* ── Domain badge ────────────────────────────────────────────────────────────── */
+.domain-badge {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-bottom: 10px;
+}
+
+/* ── Entry list ──────────────────────────────────────────────────────────────── */
+#entry-list { list-style: none; }
+.entry-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+.entry-item:hover { background: var(--surface); border-color: var(--border); }
+.entry-favicon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    color: var(--muted);
+}
+.entry-meta { flex: 1; min-width: 0; }
+.entry-service {
+    font-weight: 500;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.entry-username {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.btn-fill {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+}
+.btn-fill:hover { background: var(--accent-h); }
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+.empty-msg { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+
+/* ── Footer actions ──────────────────────────────────────────────────────────── */
+.footer-actions {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────────── */
+.spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px;
+}
+.spin-ring {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

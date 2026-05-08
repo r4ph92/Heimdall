@@ -5,6 +5,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
 
+// WebAuthn bridge for the browser extension — no auth required (performs client-side WebAuthn only)
+Route::get('/extension/webauthn-bridge', fn () => view('extension.webauthn-bridge'))->name('extension.webauthn-bridge');
+
 // Auth routes (guests only)
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => view('auth.login'))->name('login');

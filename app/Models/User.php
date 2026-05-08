@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'vault_salt', 'two_factor_type', 'two_factor_secret', 'two_factor_confirmed_at', 'two_factor_recovery_codes'])]
-#[Hidden(['password', 'remember_token', 'vault_salt', 'two_factor_secret', 'two_factor_recovery_codes'])]
+#[Fillable(['name', 'email', 'password', 'vault_salt', 'two_factor_type', 'two_factor_secret', 'two_factor_confirmed_at', 'two_factor_recovery_codes', 'extension_token', 'extension_token_expires_at'])]
+#[Hidden(['password', 'remember_token', 'vault_salt', 'two_factor_secret', 'two_factor_recovery_codes', 'extension_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -20,9 +20,10 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'       => 'datetime',
-            'two_factor_confirmed_at' => 'datetime',
-            'password'                => 'hashed',
+            'email_verified_at'            => 'datetime',
+            'two_factor_confirmed_at'      => 'datetime',
+            'extension_token_expires_at'   => 'datetime',
+            'password'                     => 'hashed',
         ];
     }
 

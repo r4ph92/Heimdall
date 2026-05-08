@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Heimdall",
+    "version": "1.0.0",
+    "description": "Zero-knowledge password manager — autofill with biometric unlock.",
+
+    "permissions": [
+        "storage",
+        "tabs",
+        "activeTab"
+    ],
+
+    "host_permissions": [
+        "https://raphaelhoule.dev/*"
+    ],
+
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_title": "Heimdall"
+    },
+
+    "background": {
+        "service_worker": "background/service-worker.js",
+        "type": "module"
+    },
+
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content/autofill.js"],
+            "run_at": "document_idle"
+        }
+    ],
+
+    "externally_connectable": {
+        "matches": ["https://raphaelhoule.dev/*"]
+    },
+
+    "content_security_policy": {
+        "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://raphaelhoule.dev;"
+    }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heimdall</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header>
+        <span class="logo">🔐</span>
+        <span class="app-name">Heimdall</span>
+        <button id="btn-logout" class="icon-btn" title="Logout" hidden>⏏</button>
+    </header>
+
+    <!-- STATE: Login form -->
+    <section id="view-login" class="view" hidden>
+        <h2>Sign in</h2>
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div class="field">
+            <label for="password">Master password</label>
+            <input type="password" id="password" autocomplete="current-password" placeholder="••••••••••••">
+        </div>
+        <div id="login-error" class="error-msg" hidden></div>
+        <button id="btn-login" class="btn-primary">Unlock vault</button>
+    </section>
+
+    <!-- STATE: Biometric unlock -->
+    <section id="view-biometric" class="view" hidden>
+        <div class="biometric-icon">🪪</div>
+        <h2>Biometric unlock</h2>
+        <p class="subtitle">Use your fingerprint or face to unlock the vault.</p>
+        <div id="biometric-error" class="error-msg" hidden></div>
+        <button id="btn-biometric" class="btn-primary">Unlock with biometrics</button>
+        <button id="btn-use-password" class="btn-ghost">Use master password instead</button>
+    </section>
+
+    <!-- STATE: Vault entries -->
+    <section id="view-vault" class="view" hidden>
+        <div class="search-row">
+            <input type="search" id="search" placeholder="Search…" autocomplete="off">
+        </div>
+        <div id="domain-badge" class="domain-badge" hidden></div>
+        <ul id="entry-list"></ul>
+        <div id="empty-msg" class="empty-msg" hidden>No matching entries.</div>
+
+        <div class="footer-actions">
+            <button id="btn-setup-biometric" class="btn-ghost small">Set up biometrics</button>
+            <button id="btn-forget-biometric" class="btn-ghost small danger" hidden>Remove biometrics</button>
+        </div>
+    </section>
+
+    <!-- Loading spinner -->
+    <div id="spinner" class="spinner" hidden>
+        <div class="spin-ring"></div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+</body>
+</html>
