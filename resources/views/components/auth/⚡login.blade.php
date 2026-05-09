@@ -116,7 +116,85 @@ new class extends Component
             </button>
         </form>
 
-        <p class="text-center text-gray-500 text-sm mt-6">
+        {{-- Passkey login --}}
+        <div class="mt-5"
+            x-data="{
+                error: '',
+                async loginWithPasskey() {
+                    this.error = '';
+                    try {
+                        const resp = await fetch('{{ route('webauthn.auth.options') }}', {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Content-Type': 'application/json' },
+                        });
+                        const options = await resp.json();
+
+                        const credential = await navigator.credentials.get({
+                            publicKey: {
+                                challenge: Uint8Array.from(atob(options.challenge), c => c.charCodeAt(0)),
+                                rpId: options.rpId,
+                                timeout: options.timeout,
+                                userVerification: options.userVerification,
+                                allowCredentials: [],
+                            }
+                        });
+
+                        const payload = {
+                            id: credential.id,
+                            rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                            type: credential.type,
+                            response: {
+                                clientDataJSON:    btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+                                authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
+                                signature:         btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+                                userHandle:        credential.response.userHandle
+                                    ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle)))
+                                    : null,
+                            }
+                        };
+
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('webauthn.auth.verify') }}';
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden'; csrf.name = '_token';
+                        csrf.value = document.querySelector('meta[name=csrf-token]').content;
+                        const data = document.createElement('input');
+                        data.type = 'hidden'; data.name = 'credential';
+                        data.value = JSON.stringify(payload);
+                        form.appendChild(csrf); form.appendChild(data);
+                        document.body.appendChild(form);
+                        form.submit();
+                    } catch (e) {
+                        if (e.name !== 'NotAllowedError') {
+                            this.error = e.message;
+                        }
+                    }
+                }
+            }"
+        >
+            <div class="flex items-center gap-3 my-4">
+                <div class="flex-1 h-px bg-gray-800"></div>
+                <span class="text-xs text-gray-600">or</span>
+                <div class="flex-1 h-px bg-gray-800"></div>
+            </div>
+
+            <button
+                type="button"
+                @click="loginWithPasskey()"
+                class="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 font-medium py-2.5 rounded-lg transition"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+                Sign in with Passkey
+            </button>
+            <p x-show="error" x-text="error" class="text-red-400 text-xs mt-2 text-center"></p>
+
+            @error('passkey') <p class="text-red-400 text-xs mt-2 text-center">{{ $message }}</p> @enderror
+        </div>
+
+        <p class="text-center text-gray-500 text-sm mt-5">
             No account yet?
             <a wire:navigate href="{{ route('register') }}" class="text-indigo-400 hover:underline">Create a vault</a>
         </p>

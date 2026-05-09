@@ -21,6 +21,12 @@ class EnsureVaultKeyInSession
         // auth cookie is still valid, the key is gone and the vault cannot be
         // decrypted. We force a re-login so the key can be re-derived.
         if (! session()->has('vault_key')) {
+            // After passkey login the user is authenticated but has no vault key yet —
+            // send them to the vault unlock page instead of forcing a full logout.
+            if (auth()->check() && session('passkey_authenticated')) {
+                return redirect()->route('vault.unlock');
+            }
+
             auth()->logout();
             session()->invalidate();
             session()->regenerateToken();

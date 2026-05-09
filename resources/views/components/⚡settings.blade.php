@@ -248,27 +248,34 @@ new class extends Component
 
     public function getWebAuthnRegisterOptions(): array
     {
-        $user = auth()->user();
-        $challenge = base64_encode(random_bytes(32));
+        $user      = auth()->user();
+        $webauthn  = app(\App\Services\WebAuthnService::class);
+        $challenge = $webauthn->generateChallenge();
         Cache::put("webauthn_challenge_{$user->id}", $challenge, now()->addMinutes(5));
+
+        // Exclude already-registered credentials so the browser won't re-register them
+        $excludeCredentials = $user->webauthnCredentials->map(fn ($c) => [
+            'id'   => $c->credential_id,
+            'type' => 'public-key',
+        ])->values()->all();
 
         return [
             'challenge' => $challenge,
-            'rp'        => ['name' => 'Heimdall', 'id' => parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost'],
+            'rp'        => ['name' => 'Heimdall', 'id' => $webauthn->rpId()],
             'user'      => [
                 'id'          => base64_encode((string) $user->id),
                 'name'        => $user->email,
                 'displayName' => $user->name,
             ],
             'pubKeyCredParams' => [
-                ['type' => 'public-key', 'alg' => -7],   // ES256
-                ['type' => 'public-key', 'alg' => -257],  // RS256
+                ['type' => 'public-key', 'alg' => -7],  // ES256 (required)
             ],
             'authenticatorSelection' => [
-                'residentKey'        => 'preferred',
-                'userVerification'   => 'preferred',
+                'residentKey'      => 'preferred',
+                'userVerification' => 'preferred',
             ],
-            'timeout' => 60000,
+            'excludeCredentials' => $excludeCredentials,
+            'timeout'            => 60000,
         ];
     }
 
@@ -283,13 +290,17 @@ new class extends Component
 
         Cache::forget("webauthn_challenge_{$user->id}");
 
-        // Store the credential — full CBOR parsing is done client-side by the browser;
-        // we store the attestation response for server-side verification on login.
+        try {
+            $verified = app(\App\Services\WebAuthnService::class)->verifyRegistration($credential, $challenge);
+        } catch (\Exception $e) {
+            throw ValidationException::withMessages(['passkeyName' => 'Passkey registration failed: ' . $e->getMessage()]);
+        }
+
         WebauthnCredential::create([
             'user_id'       => $user->id,
-            'credential_id' => $credential['id'],
-            'public_key'    => json_encode($credential['response']),
-            'sign_count'    => 0,
+            'credential_id' => $verified['credential_id'],
+            'public_key'    => $verified['public_key'],
+            'sign_count'    => $verified['sign_count'],
             'name'          => $this->passkeyName,
         ]);
 
@@ -519,7 +530,7 @@ new class extends Component
                 <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-5">
                     <div>
                         <h3 class="font-semibold text-gray-900 dark:text-white">Passkeys</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">Use Touch ID, Face ID, or a hardware key as a second factor after your master password.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Use Touch ID, Face ID, or a hardware key to sign in. You'll still enter your master password once to decrypt your vault.</p>
                     </div>
 
                     {{-- Existing passkeys --}}

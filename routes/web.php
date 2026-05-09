@@ -12,7 +12,14 @@ Route::get('/extension/webauthn-bridge', fn () => view('extension.webauthn-bridg
 Route::middleware('guest')->group(function () {
     Route::get('/login', fn () => view('auth.login'))->name('login');
     Route::get('/register', fn () => view('auth.register'))->name('register');
+
+    // WebAuthn passkey login — challenge + verify (no auth required)
+    Route::post('/webauthn/auth/options', [\App\Http\Controllers\WebAuthnAuthController::class, 'options'])->name('webauthn.auth.options');
+    Route::post('/webauthn/auth/verify',  [\App\Http\Controllers\WebAuthnAuthController::class, 'verify'])->name('webauthn.auth.verify');
 });
+
+// Vault unlock — passkey-authenticated users who still need to derive their vault key
+Route::middleware('auth')->get('/vault/unlock', fn () => view('vault-unlock'))->name('vault.unlock');
 
 // MFA challenge — auth + vault key required, but NOT mfa_verified (that's what this page does)
 Route::middleware(['auth', \App\Http\Middleware\EnsureVaultKeyInSession::class])
