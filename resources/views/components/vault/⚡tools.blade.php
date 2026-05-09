@@ -78,12 +78,10 @@ new class extends Component
 <div class="h-full overflow-y-auto animate-fadein" x-data="{
     autoLock:      localStorage.getItem('h_autolock')  ?? '15',
     timeoutAction: localStorage.getItem('h_timeout')   ?? 'lock',
-    biometric:     localStorage.getItem('h_biometric') === 'true',
     autofill:      localStorage.getItem('h_autofill')  !== 'false',
 
     setAutoLock(v)  { this.autoLock = v;      localStorage.setItem('h_autolock',  v); },
     setTimeout_(v)  { this.timeoutAction = v; localStorage.setItem('h_timeout',   v); },
-    toggleBio()     { this.biometric = !this.biometric; localStorage.setItem('h_biometric', this.biometric); },
     toggleFill()    { this.autofill  = !this.autofill;  localStorage.setItem('h_autofill',  this.autofill);  },
 }">
 <div class="max-w-5xl mx-auto p-8 space-y-6">
@@ -261,19 +259,6 @@ new class extends Component
                         </div>
                     </div>
 
-                    {{-- Biometric --}}
-                    <div class="flex items-center justify-between pt-1 border-t border-gray-100 dark:border-gray-800">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">Biometric unlock</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Use Touch ID or Face ID to unlock your vault</p>
-                        </div>
-                        <button @click="toggleBio()"
-                            :class="biometric ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'"
-                            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200">
-                            <span :class="biometric ? 'translate-x-5' : 'translate-x-0.5'"
-                                class="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200"></span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
