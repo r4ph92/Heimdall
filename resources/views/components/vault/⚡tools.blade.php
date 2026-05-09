@@ -544,12 +544,12 @@ new class extends Component
 
                     {{-- Import --}}
                     <div x-data="{ picking: false }">
-                        <label class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors duration-150 cursor-pointer">
+                        <label class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors duration-150 cursor-pointer overflow-hidden">
                             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                             </svg>
-                            Import Vault
-                            <span class="ml-auto text-xs text-gray-400">JSON / CSV</span>
+                            <span class="flex-1 truncate">Import Vault</span>
+                            <span class="shrink-0 text-xs text-gray-400">CSV</span>
                             <input type="file" wire:model="importFile" accept=".json,.csv" class="sr-only" @change="picking = true">
                         </label>
 
