@@ -46,7 +46,8 @@ class WebAuthnAuthController extends Controller
             return back()->withErrors(['passkey' => 'Authentication timed out. Please try again.']);
         }
 
-        $credential = $request->input('credential');
+        $raw        = $request->input('credential');
+        $credential = is_string($raw) ? json_decode($raw, true) : $raw;
         $credId     = $credential['id'] ?? null;
 
         if (! $credId) {
