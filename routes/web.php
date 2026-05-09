@@ -21,6 +21,10 @@ Route::middleware('guest')->group(function () {
 // Vault unlock — passkey-authenticated users who still need to derive their vault key
 Route::middleware('auth')->get('/vault/unlock', fn () => view('vault-unlock'))->name('vault.unlock');
 
+// Public share links — no auth required, all decryption happens client-side
+Route::get('/share/{token}',     [\App\Http\Controllers\ShareController::class, 'show'])->name('share.show');
+Route::get('/api/share/{token}', [\App\Http\Controllers\ShareController::class, 'payload'])->name('share.payload');
+
 // MFA challenge — auth + vault key required, but NOT mfa_verified (that's what this page does)
 Route::middleware(['auth', \App\Http\Middleware\EnsureVaultKeyInSession::class])
     ->get('/mfa/challenge', fn () => view('mfa.challenge'))

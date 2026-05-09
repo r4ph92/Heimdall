@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\SharedEntry;
 use App\Models\VaultEntry;
 use App\Services\EncryptionService;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 new class extends Component
@@ -48,6 +50,23 @@ new class extends Component
     {
         $this->selectedEntryId = null;
         $this->decrypted = null;
+    }
+
+    public function createShare(string $encryptedBlob, string $iv): string
+    {
+        VaultEntry::where('user_id', auth()->id())->findOrFail($this->selectedEntryId);
+
+        $token = Str::random(48);
+        SharedEntry::create([
+            'created_by'     => auth()->id(),
+            'token'          => $token,
+            'encrypted_blob' => $encryptedBlob,
+            'iv'             => $iv,
+            'entry_name'     => $this->decrypted['service_name'],
+            'expires_at'     => now()->addDays(7),
+        ]);
+
+        return $token;
     }
 
     public function deleteEntry(int $id): void
@@ -165,7 +184,62 @@ new class extends Component
                             <p class="text-xs text-gray-500">Updated {{ $decrypted['updated_at'] }}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="relative flex items-center gap-2"
+                        x-data="{
+                            shareUrl: null,
+                            sharing: false,
+                            copied: false,
+                            async share() {
+                                this.sharing = true;
+                                this.shareUrl = null;
+                                try {
+                                    const data = {
+                                        service_name: @js($decrypted['service_name']),
+                                        username:     @js($decrypted['username']),
+                                        url:          @js($decrypted['url']),
+                                        password:     @js($decrypted['password']),
+                                        notes:        @js($decrypted['notes']),
+                                    };
+                                    const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+                                    const iv  = crypto.getRandomValues(new Uint8Array(12));
+                                    const ct  = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+                                    const raw = await crypto.subtle.exportKey('raw', key);
+                                    const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+                                    const token = await $wire.createShare(b64u(ct), b64u(iv));
+                                    this.shareUrl = window.location.origin + '/share/' + token + '#' + b64u(raw);
+                                } catch(e) { alert('Share failed: ' + e.message); }
+                                this.sharing = false;
+                            },
+                            copyLink() {
+                                navigator.clipboard.writeText(this.shareUrl).then(() => { this.copied = true; setTimeout(() => this.copied = false, 2000); });
+                            }
+                        }"
+                    >
+                        {{-- Share button --}}
+                        <button @click="share()" :disabled="sharing"
+                            class="text-gray-400 dark:text-gray-600 hover:text-green-400 transition-colors duration-150 disabled:opacity-50"
+                            title="Share entry">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                            </svg>
+                        </button>
+
+                        {{-- Share link popover --}}
+                        <div x-show="shareUrl" x-cloak
+                            class="absolute right-0 top-10 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-4 w-80"
+                            @click.outside="shareUrl = null"
+                        >
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Share link (valid 7 days)</p>
+                            <div class="flex gap-2">
+                                <input :value="shareUrl" readonly
+                                    class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-lg px-3 py-2 focus:outline-none min-w-0">
+                                <button @click="copyLink()"
+                                    class="shrink-0 px-3 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
+                                    x-text="copied ? 'Copied!' : 'Copy'"></button>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">End-to-end encrypted. The server never sees the password.</p>
+                        </div>
+
                         <button
                             wire:click="$dispatch('edit-entry', { id: {{ $decrypted['id'] }} })"
                             class="text-gray-400 dark:text-gray-600 hover:text-indigo-400 transition-colors duration-150"
