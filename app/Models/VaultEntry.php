@@ -12,11 +12,17 @@ class VaultEntry extends Model
         'service_name',
         'username',
         'url',
+        'is_favorite',
         'encrypted_password',
         'encrypted_notes',
         'iv',
         'notes_iv',
     ];
+
+    protected function casts(): array
+    {
+        return ['is_favorite' => 'boolean'];
+    }
 
     public function user(): BelongsTo
     {

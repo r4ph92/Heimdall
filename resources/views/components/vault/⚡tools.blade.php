@@ -1,12 +1,16 @@
 <?php
 
+use App\Models\VaultEntry;
 use App\Services\EncryptionService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component
 {
+    use WithFileUploads;
+
     // ── Master password change ────────────────────────────────────
     public string $current_password = '';
     public string $new_password = '';
@@ -60,6 +64,93 @@ new class extends Component
 
         $this->reset('current_password', 'new_password', 'new_password_confirmation');
         $this->passwordSaved = true;
+    }
+
+    // ── Import ───────────────────────────────────────────────────
+    public $importFile = null;
+    public ?string $importMessage = null;
+    public bool $importError = false;
+
+    public function importVault(EncryptionService $encryption): void
+    {
+        $this->validate(['importFile' => ['required', 'file', 'max:2048']]);
+
+        $path      = $this->importFile->getRealPath();
+        $extension = strtolower($this->importFile->getClientOriginalExtension());
+        $key       = base64_decode(session('vault_key'));
+        $user      = auth()->user();
+        $imported  = 0;
+
+        try {
+            if ($extension === 'json') {
+                $data    = json_decode(file_get_contents($path), true);
+                $entries = $data['vault'] ?? $data;
+                foreach ($entries as $row) {
+                    $this->insertEntry($user->id, $row, $encryption, $key);
+                    $imported++;
+                }
+            } else {
+                // CSV — auto-detect LastPass, Bitwarden, or generic
+                $handle  = fopen($path, 'r');
+                $headers = array_map('trim', fgetcsv($handle));
+
+                // Map headers to our field names
+                $map = $this->detectCsvMap($headers);
+
+                while (($row = fgetcsv($handle)) !== false) {
+                    $data = array_combine($headers, $row);
+                    $this->insertEntry($user->id, [
+                        'service_name' => trim($data[$map['service']] ?? ''),
+                        'username'     => trim($data[$map['username']] ?? ''),
+                        'password'     => trim($data[$map['password']] ?? ''),
+                        'url'          => trim($data[$map['url']] ?? ''),
+                        'notes'        => trim($data[$map['notes']] ?? ''),
+                    ], $encryption, $key);
+                    $imported++;
+                }
+                fclose($handle);
+            }
+
+            $this->importMessage = "Successfully imported {$imported} " . ($imported === 1 ? 'entry' : 'entries') . '.';
+            $this->importError   = false;
+        } catch (\Exception $e) {
+            $this->importMessage = 'Import failed: ' . $e->getMessage();
+            $this->importError   = true;
+        }
+
+        $this->importFile = null;
+    }
+
+    private function insertEntry(int $userId, array $row, EncryptionService $enc, string $key): void
+    {
+        $password = $row['password'] ?? '';
+        if (! $password) return;
+
+        $ep = $enc->encrypt($password, $key);
+        $en = ! empty($row['notes']) ? $enc->encrypt($row['notes'], $key) : null;
+
+        VaultEntry::create([
+            'user_id'            => $userId,
+            'service_name'       => $row['service_name'] ?: 'Imported',
+            'username'           => $row['username'] ?: null,
+            'url'                => $row['url'] ?: null,
+            'encrypted_password' => $ep['ciphertext'],
+            'iv'                 => $ep['iv'],
+            'encrypted_notes'    => $en ? $en['ciphertext'] : null,
+            'notes_iv'           => $en ? $en['iv'] : null,
+        ]);
+    }
+
+    private function detectCsvMap(array $headers): array
+    {
+        $h = array_map('strtolower', $headers);
+        return [
+            'service'  => $headers[array_search(collect($h)->first(fn($v) => in_array($v, ['name','title','service_name','service','grouping'])) ?? '', $h) ?: 0] ?? 'name',
+            'username' => $headers[array_search(collect($h)->first(fn($v) => in_array($v, ['username','login_username','user','email','login'])) ?? '', $h) ?: 1] ?? 'username',
+            'password' => $headers[array_search(collect($h)->first(fn($v) => in_array($v, ['password','login_password','pass'])) ?? '', $h) ?: 2] ?? 'password',
+            'url'      => $headers[array_search(collect($h)->first(fn($v) => in_array($v, ['url','login_uri','website','uri'])) ?? '', $h) ?: 3] ?? 'url',
+            'notes'    => $headers[array_search(collect($h)->first(fn($v) => in_array($v, ['notes','note','extra','comment'])) ?? '', $h) ?: 4] ?? 'notes',
+        ];
     }
 
     public function deleteAccount(): void
@@ -450,15 +541,37 @@ new class extends Component
                         Export Vault
                         <span class="ml-auto text-xs text-gray-400">JSON</span>
                     </a>
-                    <button
-                        class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors duration-150"
-                        title="Import coming soon">
-                        <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                        </svg>
-                        Import Vault
-                        <span class="ml-auto text-xs text-gray-400">Soon</span>
-                    </button>
+
+                    {{-- Import --}}
+                    <div x-data="{ picking: false }">
+                        <label class="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl transition-colors duration-150 cursor-pointer">
+                            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            Import Vault
+                            <span class="ml-auto text-xs text-gray-400">JSON / CSV</span>
+                            <input type="file" wire:model="importFile" accept=".json,.csv" class="sr-only" @change="picking = true">
+                        </label>
+
+                        @if($importFile)
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs text-gray-500 truncate flex-1">{{ $importFile->getClientOriginalName() }}</span>
+                                <button type="button" wire:click="importVault"
+                                    wire:loading.attr="disabled"
+                                    class="shrink-0 px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors duration-150"
+                                    wire:loading.class="opacity-60">
+                                    <span wire:loading.remove wire:target="importVault">Import</span>
+                                    <span wire:loading wire:target="importVault">Importing…</span>
+                                </button>
+                            </div>
+                        @endif
+
+                        @if($importMessage)
+                            <p class="mt-2 text-xs px-3 py-2 rounded-lg {{ $importError ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' }}">
+                                {{ $importMessage }}
+                            </p>
+                        @endif
+                    </div>
                 </div>
             </div>
 

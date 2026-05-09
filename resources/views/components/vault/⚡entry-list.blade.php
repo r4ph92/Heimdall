@@ -43,7 +43,17 @@ new class extends Component
                 ? $encryption->decrypt($entry->encrypted_notes, $entry->notes_iv, $key)
                 : null,
             'updated_at'   => $entry->updated_at->diffForHumans(),
+            'is_favorite'  => $entry->is_favorite,
         ];
+    }
+
+    public function toggleFavorite(int $id): void
+    {
+        $entry = VaultEntry::where('user_id', auth()->id())->findOrFail($id);
+        $entry->update(['is_favorite' => ! $entry->is_favorite]);
+        if ($this->decrypted && $this->decrypted['id'] === $id) {
+            $this->decrypted['is_favorite'] = ! $entry->getOriginal('is_favorite');
+        }
     }
 
     public function clearSelection(): void
@@ -83,6 +93,7 @@ new class extends Component
             ->when($this->search, fn ($q) => $q
                 ->where('service_name', 'like', '%'.$this->search.'%')
                 ->orWhere('username', 'like', '%'.$this->search.'%'))
+            ->orderByDesc('is_favorite')
             ->orderBy('service_name')
             ->get();
     }
@@ -131,10 +142,15 @@ new class extends Component
                             {{ strtoupper(substr($entry->service_name, 0, 1)) }}
                         @endif
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $entry->service_name }}</p>
                         <p class="text-xs text-gray-500 truncate">{{ $entry->username ?? $entry->url ?? '—' }}</p>
                     </div>
+                    @if($entry->is_favorite)
+                        <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    @endif
                 </button>
             @empty
                 <div class="px-4 py-10 text-center">
@@ -184,6 +200,18 @@ new class extends Component
                             <p class="text-xs text-gray-500">Updated {{ $decrypted['updated_at'] }}</p>
                         </div>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            wire:click="toggleFavorite({{ $decrypted['id'] }})"
+                            class="transition-colors duration-150 {{ $decrypted['is_favorite'] ? 'text-amber-400 hover:text-amber-300' : 'text-gray-400 dark:text-gray-600 hover:text-amber-400' }}"
+                            title="{{ $decrypted['is_favorite'] ? 'Remove from favorites' : 'Add to favorites' }}"
+                        >
+                            <svg class="w-5 h-5" fill="{{ $decrypted['is_favorite'] ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                            </svg>
+                        </button>
+                    </div>
+
                     <div class="relative flex items-center gap-2"
                         x-data="{
                             shareUrl: null,
