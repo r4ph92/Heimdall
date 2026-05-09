@@ -70,6 +70,12 @@ Route::middleware([
         ]);
     })->name('vault.export');
 
+    // Vault lock — clears vault key but keeps user authenticated (prompts for master password again)
+    Route::post('/vault/lock', function () {
+        session()->forget(['vault_key', 'mfa_verified']);
+        return response()->json(['locked' => true]);
+    })->name('vault.lock');
+
     Route::post('/logout', function () {
         session()->forget(['vault_key', 'mfa_verified']);
         Auth::logout();

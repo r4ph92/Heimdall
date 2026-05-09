@@ -61,7 +61,29 @@ new class extends Component
 };
 ?>
 
-<div class="flex h-screen bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-white overflow-hidden animate-fadein">
+<div class="flex h-screen bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-white overflow-hidden animate-fadein"
+    x-data="{
+        _timer: null,
+        _reset() {
+            const mins = localStorage.getItem('h_autolock') ?? '15';
+            if (mins === 'never') { clearTimeout(this._timer); return; }
+            clearTimeout(this._timer);
+            this._timer = setTimeout(() => this._expire(), parseInt(mins) * 60 * 1000);
+        },
+        _expire() {
+            const action = localStorage.getItem('h_timeout') ?? 'lock';
+            const token  = document.querySelector('meta[name=csrf-token]')?.content ?? '';
+            const url    = action === 'logout' ? '/logout' : '/vault/lock';
+            fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': token } })
+                .finally(() => { window.location.href = action === 'logout' ? '/login' : '/vault/unlock'; });
+        }
+    }"
+    x-init="
+        _reset();
+        ['mousemove','keydown','click','touchstart'].forEach(ev =>
+            window.addEventListener(ev, () => _reset(), { passive: true })
+        );
+    ">
 
     <x-app-sidebar :active="$activeView" />
 
