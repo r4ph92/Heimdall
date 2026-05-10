@@ -256,15 +256,31 @@ new class extends Component
                         <div x-show="shareUrl" x-cloak
                             class="absolute right-0 top-10 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-4 w-80"
                             @click.outside="shareUrl = null"
+                            x-data="{ copiedUrl: false, copiedKey: false,
+                                get shareKey() { return shareUrl ? shareUrl.split('#')[1] : ''; }
+                            }"
                         >
                             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Share link (valid 7 days)</p>
-                            <div class="flex gap-2">
+
+                            {{-- Full URL --}}
+                            <div class="flex gap-2 mb-3">
                                 <input :value="shareUrl" readonly
                                     class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-lg px-3 py-2 focus:outline-none min-w-0">
-                                <button @click="copyLink()"
+                                <button @click="navigator.clipboard.writeText(shareUrl).then(() => { copiedUrl = true; setTimeout(() => copiedUrl = false, 2000) })"
                                     class="shrink-0 px-3 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
-                                    x-text="copied ? 'Copied!' : 'Copy'"></button>
+                                    x-text="copiedUrl ? 'Copied!' : 'Copy'"></button>
                             </div>
+
+                            {{-- Key separately (for apps that strip the # fragment) --}}
+                            <p class="text-xs text-amber-500 dark:text-amber-400 mb-1">⚠ Some apps strip the key from the URL. Share it separately if needed:</p>
+                            <div class="flex gap-2">
+                                <input :value="shareKey" readonly
+                                    class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-lg px-3 py-2 focus:outline-none min-w-0 font-mono">
+                                <button @click="navigator.clipboard.writeText(shareKey).then(() => { copiedKey = true; setTimeout(() => copiedKey = false, 2000) })"
+                                    class="shrink-0 px-3 py-2 text-xs font-medium bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                                    x-text="copiedKey ? 'Copied!' : 'Key'"></button>
+                            </div>
+
                             <p class="text-xs text-gray-400 mt-2">End-to-end encrypted. The server never sees the password.</p>
                         </div>
 

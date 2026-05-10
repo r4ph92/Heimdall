@@ -29,10 +29,27 @@
         <p class="text-gray-500 text-sm mt-1">Ask the sender to generate a new share link.</p>
     </div>
 
-    {{-- No key in URL --}}
-    <div x-show="state === 'nokey'" class="bg-yellow-900/20 border border-yellow-800/50 rounded-2xl p-6 text-center">
-        <p class="text-yellow-400 font-semibold">Invalid share link.</p>
-        <p class="text-gray-500 text-sm mt-1">The decryption key is missing from the URL. Make sure you copied the full link.</p>
+    {{-- No key in URL — let user paste it manually --}}
+    <div x-show="state === 'nokey'" class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+        <p class="text-yellow-400 font-semibold mb-1">Decryption key missing</p>
+        <p class="text-gray-400 text-sm mb-4">
+            The key was stripped from the URL (common with messaging apps).
+            Ask the sender for the key and paste it below.
+        </p>
+        <input
+            x-model="manualKey"
+            type="text"
+            placeholder="Paste key here…"
+            @keydown.enter="decryptWithKey(manualKey)"
+            class="w-full bg-gray-800 border border-gray-700 text-white text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
+        >
+        <button
+            @click="decryptWithKey(manualKey)"
+            :disabled="!manualKey.trim()"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-semibold py-2.5 rounded-xl transition"
+        >
+            Decrypt
+        </button>
     </div>
 
     {{-- Decrypting --}}
@@ -45,6 +62,9 @@
     <div x-show="state === 'error'" class="bg-red-900/20 border border-red-800/50 rounded-2xl p-6 text-center">
         <p class="text-red-400 font-semibold">Decryption failed.</p>
         <p class="text-gray-500 text-sm mt-1" x-text="errorMsg"></p>
+        <button @click="state = 'nokey'" class="mt-4 text-xs text-indigo-400 hover:text-indigo-300 transition">
+            Try a different key →
+        </button>
     </div>
 
     {{-- Decrypted entry --}}
@@ -109,23 +129,34 @@
 <script>
 function shareDecrypt(token, expiredFlag) {
     return {
-        state:    expiredFlag === 'expired' ? 'expired' : 'loading',
-        entry:    {},
-        errorMsg: '',
+        state:     expiredFlag === 'expired' ? 'expired' : 'loading',
+        entry:     {},
+        errorMsg:  '',
+        manualKey: '',
 
         async init() {
             if (this.state === 'expired') return;
 
             const fragment = window.location.hash.slice(1);
-            if (! fragment) { this.state = 'nokey'; return; }
+            if (!fragment) { this.state = 'nokey'; return; }
 
+            await this.decryptWithKey(fragment);
+        },
+
+        async decryptWithKey(keyB64u) {
+            if (!keyB64u || !keyB64u.trim()) return;
+            this.state = 'loading';
             try {
-                const keyBytes = Uint8Array.from(atob(fragment.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+                // Restore standard base64 from base64url, add padding if needed
+                let b64 = keyB64u.trim().replace(/-/g, '+').replace(/_/g, '/');
+                while (b64.length % 4) b64 += '=';
+
+                const keyBytes  = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
                 const cryptoKey = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['decrypt']);
 
                 const resp = await fetch(`/api/share/${token}`);
-                if (! resp.ok) {
-                    const data = await resp.json();
+                if (!resp.ok) {
+                    const data = await resp.json().catch(() => ({}));
                     this.errorMsg = data.error ?? 'Failed to load share data.';
                     this.state = 'error';
                     return;
@@ -133,7 +164,12 @@ function shareDecrypt(token, expiredFlag) {
 
                 const { encrypted_blob, iv } = await resp.json();
 
-                const b64decode = s => Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+                const b64decode = s => {
+                    let padded = s.replace(/-/g, '+').replace(/_/g, '/');
+                    while (padded.length % 4) padded += '=';
+                    return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+                };
+
                 const ciphertext = b64decode(encrypted_blob);
                 const ivBytes    = b64decode(iv);
 
@@ -141,7 +177,7 @@ function shareDecrypt(token, expiredFlag) {
                 this.entry = JSON.parse(new TextDecoder().decode(plaintext));
                 this.state = 'done';
             } catch (e) {
-                this.errorMsg = 'Decryption failed. The link may be corrupted or tampered with.';
+                this.errorMsg = 'Decryption failed — the key may be wrong or the link corrupted.';
                 this.state = 'error';
             }
         }
