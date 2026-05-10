@@ -21,6 +21,15 @@ Route::middleware('guest')->group(function () {
     Route::post('/webauthn/auth/verify',  [\App\Http\Controllers\WebAuthnAuthController::class, 'verify'])->name('webauthn.auth.verify');
 });
 
+// Logout — auth only, no verified/vault-key required so any auth'd user can sign out
+Route::middleware('auth')->post('/logout', function () {
+    session()->forget(['vault_key', 'mfa_verified']);
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect()->route('login');
+})->name('logout');
+
 // Email verification — auth required but verified is NOT required (that's what these routes do)
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', fn () => view('auth.verify-email'))->name('verification.notice');
@@ -101,12 +110,4 @@ Route::middleware([
         session()->forget(['vault_key', 'mfa_verified']);
         return response()->json(['locked' => true]);
     })->name('vault.lock');
-
-    Route::post('/logout', function () {
-        session()->forget(['vault_key', 'mfa_verified']);
-        Auth::logout();
-        request()->session()->invalidate();
-        request()->session()->regenerateToken();
-        return redirect()->route('login');
-    })->name('logout');
 });
