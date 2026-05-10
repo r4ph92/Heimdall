@@ -33,8 +33,6 @@ new class extends Component
             'vault_salt' => $salt,
         ]);
 
-        event(new Registered($user));
-
         // Derive the encryption key from the master password and store it in the
         // session. It will be used to encrypt/decrypt vault entries until logout.
         $encryptionKey = $encryption->deriveKey($this->password, $salt);
@@ -44,6 +42,12 @@ new class extends Component
         ]);
 
         Auth::login($user);
+
+        try {
+            event(new Registered($user));
+        } catch (\Exception $e) {
+            session()->flash('email_error', 'Account created, but we could not send the verification email. Use the button below to retry.');
+        }
 
         // Redirect to email verification notice — dashboard is gated behind verified middleware
         $this->redirect(route('verification.notice'), navigate: false);

@@ -34,8 +34,12 @@ Route::middleware('auth')->group(function () {
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->route('dashboard');
         }
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('resent', true);
+        try {
+            $request->user()->sendEmailVerificationNotification();
+            return back()->with('resent', true);
+        } catch (\Exception $e) {
+            return back()->with('email_error', 'Could not send the verification email. Please try again later.');
+        }
     })->middleware('throttle:6,1')->name('verification.send');
 });
 
