@@ -139,6 +139,11 @@ new class extends Component
                             }
                         });
 
+                        if (!credential) {
+                            this.error = 'No passkey found on this device.';
+                            return;
+                        }
+
                         const payload = {
                             id: credential.id,
                             rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),

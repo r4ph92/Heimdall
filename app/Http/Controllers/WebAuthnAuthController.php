@@ -56,8 +56,8 @@ class WebAuthnAuthController extends Controller
 
         $stored = WebauthnCredential::where('credential_id', $credId)->first();
 
-        if (! $stored) {
-            return back()->withErrors(['passkey' => 'Passkey not registered.']);
+        if (! $stored || ! $stored->user) {
+            return back()->withErrors(['passkey' => 'No account found for this passkey.']);
         }
 
         try {
