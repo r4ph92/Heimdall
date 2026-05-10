@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +21,24 @@ Route::middleware('guest')->group(function () {
     Route::post('/webauthn/auth/verify',  [\App\Http\Controllers\WebAuthnAuthController::class, 'verify'])->name('webauthn.auth.verify');
 });
 
+// Email verification — auth required but verified is NOT required (that's what these routes do)
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', fn () => view('auth.verify-email'))->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect()->route('dashboard');
+    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Request $request) {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->route('dashboard');
+        }
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('resent', true);
+    })->middleware('throttle:6,1')->name('verification.send');
+});
+
 // Vault unlock — passkey-authenticated users who still need to derive their vault key
 Route::middleware('auth')->get('/vault/unlock', fn () => view('vault-unlock'))->name('vault.unlock');
 
@@ -25,14 +46,15 @@ Route::middleware('auth')->get('/vault/unlock', fn () => view('vault-unlock'))->
 Route::get('/share/{token}',     [\App\Http\Controllers\ShareController::class, 'show'])->name('share.show');
 Route::get('/api/share/{token}', [\App\Http\Controllers\ShareController::class, 'payload'])->name('share.payload');
 
-// MFA challenge — auth + vault key required, but NOT mfa_verified (that's what this page does)
-Route::middleware(['auth', \App\Http\Middleware\EnsureVaultKeyInSession::class])
+// MFA challenge — auth + verified + vault key required, but NOT mfa_verified (that's what this page does)
+Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureVaultKeyInSession::class])
     ->get('/mfa/challenge', fn () => view('mfa.challenge'))
     ->name('mfa.challenge');
 
-// Fully authenticated routes — auth + vault key + MFA verified
+// Fully authenticated routes — auth + verified + vault key + MFA verified
 Route::middleware([
     'auth',
+    'verified',
     \App\Http\Middleware\EnsureVaultKeyInSession::class,
     \App\Http\Middleware\EnsureMfaVerified::class,
 ])->group(function () {

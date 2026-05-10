@@ -45,7 +45,8 @@ new class extends Component
 
         Auth::login($user);
 
-        $this->redirect(route('dashboard'), navigate: true);
+        // Redirect to email verification notice — dashboard is gated behind verified middleware
+        $this->redirect(route('verification.notice'), navigate: false);
     }
 };
 ?>
